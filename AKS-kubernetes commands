@@ -1,0 +1,1 @@
+az aks get-credentials --resource-group 1-d0641874-playground-sandbox(resourse groupname) --name master-cluster(cluste-name)
