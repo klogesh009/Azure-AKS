@@ -1,1 +1,45 @@
 az aks get-credentials --resource-group 1-d0641874-playground-sandbox(resourse groupname) --name master-cluster(cluste-name)
+
+
+To override kubectl on AKS cluster:-
+--------------------------------------
+
+az aks get-credentials --resource-group<resource_name> --name<cluster_name>
+
+
+To get the cluster-current version and upgradable version:-
+--------------------------------------------------------------
+az aks get-upgrades --resource-group 1-d0641874-playground-sandbox --name master-cluster --output table
+
+
+To get the nodepool name:-
+-----------------------------
+az aks nodepool list --cluster-name master-cluster --resource-group 1-d0641874-playground-sandbox --query '[].name' -o tsv
+
+
+To get the nodepool current version:-
+-----------------------------------------
+az aks nodepool show --cluster-name master-cluster --resource-group 1-d0641874-playground-sandbox --name lokinode|jq -r .orchestratorVersion
+
+To Upgrade control plane only:-
+--------------------------------------
+
+az aks upgrade --resource-group 1-d0641874-playground-sandbox  --name master-cluster --kubernetes-version 1.23.8 --control-plane-only
+
+
+----------------------------------------------------------------------------------------------------------------------------------------------------------
+
+CLUSTER_NAME='master-cluster'
+RESOURCE_GROUP='1-d0641874-playground-sandbox'
+
+CLUSTER_VERSION=$(az aks show --name $CLUSTER_NAME --resource-group $RESOURCE_GROUP | jq -r .kubernetesVersion)
+NODE_POOLS=$(az aks nodepool list --cluster-name $CLUSTER_NAME --resource-group $RESOURCE_GROUP --query '[].name' -o tsv)
+
+for NODE_POOL in $NODE_POOLS; do
+    NODE_VERSION=$(az aks nodepool show --cluster-name $CLUSTER_NAME --resource-group $RESOURCE_GROUP --name $NODE_POOL | jq -r .orchestratorVersion)
+    if [[ $CLUSTER_VERSION != $NODE_VERSION ]]; then
+        az aks nodepool upgrade --kubernetes-version $CLUSTER_VERSION --cluster-name $CLUSTER_NAME --resource-group $RESOURCE_GROUP --name $NODE_POOL --verbose
+    fi
+done
+
+-------------------------------------------------------------------------------------------------------------------------------
